@@ -1,6 +1,7 @@
 -- ============================================================
--- BookEase — Schema do banco de dados
--- Execute este arquivo no SQL Editor do Supabase Studio
+-- BookEase — Schema do banco de dados (Neon PostgreSQL)
+-- Execute este arquivo no SQL Editor do Neon Console
+-- neon.tech → seu projeto → SQL Editor
 -- ============================================================
 
 -- Extensão necessária para a constraint de exclusão de sobreposição
@@ -10,10 +11,19 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -- TABELAS
 -- ============================================================
 
+-- Donos de empresas (gerenciado pelo Auth.js)
+CREATE TABLE IF NOT EXISTS users (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email       text UNIQUE NOT NULL,
+  password    text NOT NULL,
+  name        text,
+  created_at  timestamptz DEFAULT now()
+);
+
 -- Empresas cadastradas no sistema
 CREATE TABLE IF NOT EXISTS businesses (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id     uuid REFERENCES auth.users NOT NULL,
+  owner_id     uuid REFERENCES users ON DELETE CASCADE NOT NULL,
   name         text NOT NULL,
   slug         text UNIQUE NOT NULL,
   type         text CHECK (type IN ('clinic', 'barbershop', 'salon')),
@@ -107,199 +117,14 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- ÍNDICES (performance nas consultas mais comuns)
 -- ============================================================
 
-CREATE INDEX IF NOT EXISTS idx_businesses_owner     ON businesses (owner_id);
-CREATE INDEX IF NOT EXISTS idx_businesses_slug      ON businesses (slug);
-CREATE INDEX IF NOT EXISTS idx_services_business    ON services (business_id);
-CREATE INDEX IF NOT EXISTS idx_professionals_business ON professionals (business_id);
-CREATE INDEX IF NOT EXISTS idx_availability_prof    ON availability (professional_id);
-CREATE INDEX IF NOT EXISTS idx_customers_business   ON customers (business_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_business ON appointments (business_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_date    ON appointments (scheduled_date);
-CREATE INDEX IF NOT EXISTS idx_appointments_prof    ON appointments (professional_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_status  ON appointments (status);
-
--- ============================================================
--- ROW LEVEL SECURITY (RLS)
--- ============================================================
-
-ALTER TABLE businesses          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE services            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE professionals       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE professional_services ENABLE ROW LEVEL SECURITY;
-ALTER TABLE availability        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE appointments        ENABLE ROW LEVEL SECURITY;
-
--- ============================================================
--- FUNÇÃO AUXILIAR — retorna os IDs das empresas do usuário logado
--- ============================================================
-
-CREATE OR REPLACE FUNCTION get_user_business_ids()
-RETURNS uuid[] LANGUAGE sql SECURITY DEFINER STABLE AS $$
-  SELECT ARRAY(SELECT id FROM businesses WHERE owner_id = auth.uid())
-$$;
-
--- ============================================================
--- POLÍTICAS — businesses
--- ============================================================
-
-CREATE POLICY "Dono vê sua empresa"
-  ON businesses FOR SELECT
-  USING (owner_id = auth.uid());
-
-CREATE POLICY "Dono cria sua empresa"
-  ON businesses FOR INSERT
-  WITH CHECK (owner_id = auth.uid());
-
-CREATE POLICY "Dono edita sua empresa"
-  ON businesses FOR UPDATE
-  USING (owner_id = auth.uid());
-
-CREATE POLICY "Dono deleta sua empresa"
-  ON businesses FOR DELETE
-  USING (owner_id = auth.uid());
-
--- Acesso público por slug (página de agendamento)
-CREATE POLICY "Público lê empresa por slug"
-  ON businesses FOR SELECT
-  TO anon
-  USING (true);
-
--- ============================================================
--- POLÍTICAS — services
--- ============================================================
-
-CREATE POLICY "Dono gerencia serviços"
-  ON services FOR ALL
-  USING (business_id = ANY(get_user_business_ids()))
-  WITH CHECK (business_id = ANY(get_user_business_ids()));
-
-CREATE POLICY "Público lê serviços ativos"
-  ON services FOR SELECT
-  TO anon
-  USING (is_active = true);
-
--- ============================================================
--- POLÍTICAS — professionals
--- ============================================================
-
-CREATE POLICY "Dono gerencia profissionais"
-  ON professionals FOR ALL
-  USING (business_id = ANY(get_user_business_ids()))
-  WITH CHECK (business_id = ANY(get_user_business_ids()));
-
-CREATE POLICY "Público lê profissionais ativos"
-  ON professionals FOR SELECT
-  TO anon
-  USING (is_active = true);
-
--- ============================================================
--- POLÍTICAS — professional_services
--- ============================================================
-
-CREATE POLICY "Dono gerencia vínculo profissional-serviço"
-  ON professional_services FOR ALL
-  USING (
-    professional_id IN (
-      SELECT id FROM professionals
-      WHERE business_id = ANY(get_user_business_ids())
-    )
-  )
-  WITH CHECK (
-    professional_id IN (
-      SELECT id FROM professionals
-      WHERE business_id = ANY(get_user_business_ids())
-    )
-  );
-
-CREATE POLICY "Público lê vínculos profissional-serviço"
-  ON professional_services FOR SELECT
-  TO anon
-  USING (true);
-
--- ============================================================
--- POLÍTICAS — availability
--- ============================================================
-
-CREATE POLICY "Dono gerencia disponibilidade"
-  ON availability FOR ALL
-  USING (
-    professional_id IN (
-      SELECT id FROM professionals
-      WHERE business_id = ANY(get_user_business_ids())
-    )
-  )
-  WITH CHECK (
-    professional_id IN (
-      SELECT id FROM professionals
-      WHERE business_id = ANY(get_user_business_ids())
-    )
-  );
-
-CREATE POLICY "Público lê disponibilidade"
-  ON availability FOR SELECT
-  TO anon
-  USING (true);
-
--- ============================================================
--- POLÍTICAS — customers
--- ============================================================
-
-CREATE POLICY "Dono vê clientes da sua empresa"
-  ON customers FOR SELECT
-  USING (business_id = ANY(get_user_business_ids()));
-
-CREATE POLICY "Dono edita clientes da sua empresa"
-  ON customers FOR UPDATE
-  USING (business_id = ANY(get_user_business_ids()));
-
--- Qualquer pessoa pode criar um cliente ao agendar (página pública)
-CREATE POLICY "Público cria cliente"
-  ON customers FOR INSERT
-  TO anon
-  WITH CHECK (true);
-
--- ============================================================
--- POLÍTICAS — appointments
--- ============================================================
-
-CREATE POLICY "Dono vê agendamentos da sua empresa"
-  ON appointments FOR SELECT
-  USING (business_id = ANY(get_user_business_ids()));
-
-CREATE POLICY "Dono atualiza agendamentos da sua empresa"
-  ON appointments FOR UPDATE
-  USING (business_id = ANY(get_user_business_ids()));
-
-CREATE POLICY "Dono deleta agendamentos da sua empresa"
-  ON appointments FOR DELETE
-  USING (business_id = ANY(get_user_business_ids()));
-
--- Qualquer pessoa pode criar agendamento (página pública)
-CREATE POLICY "Público cria agendamento"
-  ON appointments FOR INSERT
-  TO anon
-  WITH CHECK (true);
-
--- Público pode ler horários ocupados (para mostrar slots disponíveis)
-CREATE POLICY "Público lê agendamentos para verificar disponibilidade"
-  ON appointments FOR SELECT
-  TO anon
-  USING (status NOT IN ('canceled'));
-
--- ============================================================
--- TRIGGER — cria registro em businesses ao criar novo usuário
--- (opcional: descomentar se quiser auto-setup no primeiro login)
--- ============================================================
-
--- CREATE OR REPLACE FUNCTION handle_new_user()
--- RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
--- BEGIN
---   -- O usuário precisará configurar o nome/slug depois
---   RETURN new;
--- END;
--- $$;
---
--- CREATE TRIGGER on_auth_user_created
---   AFTER INSERT ON auth.users
---   FOR EACH ROW EXECUTE PROCEDURE handle_new_user();
+CREATE INDEX IF NOT EXISTS idx_users_email             ON users (email);
+CREATE INDEX IF NOT EXISTS idx_businesses_owner        ON businesses (owner_id);
+CREATE INDEX IF NOT EXISTS idx_businesses_slug         ON businesses (slug);
+CREATE INDEX IF NOT EXISTS idx_services_business       ON services (business_id);
+CREATE INDEX IF NOT EXISTS idx_professionals_business  ON professionals (business_id);
+CREATE INDEX IF NOT EXISTS idx_availability_prof       ON availability (professional_id);
+CREATE INDEX IF NOT EXISTS idx_customers_business      ON customers (business_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_business   ON appointments (business_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_date       ON appointments (scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_prof       ON appointments (professional_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_status     ON appointments (status);

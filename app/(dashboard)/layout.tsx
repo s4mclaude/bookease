@@ -1,15 +1,14 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/auth'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await auth()
 
-  if (!user) {
+  if (!session) {
     redirect('/login')
   }
 
@@ -25,7 +24,6 @@ export default async function DashboardLayout({
         </nav>
       </aside>
 
-      {/* Conteúdo principal */}
       <main className="flex-1 overflow-auto">
         {children}
       </main>

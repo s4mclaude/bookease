@@ -1,3 +1,10 @@
+export interface User {
+  id: string
+  email: string
+  name: string | null
+  created_at: string
+}
+
 export interface Business {
   id: string
   owner_id: string
