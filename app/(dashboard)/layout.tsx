@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import sql from '@/lib/db'
+import Sidebar from '@/components/dashboard/Sidebar'
 
 export default async function DashboardLayout({
   children,
@@ -7,24 +9,16 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) redirect('/login')
 
-  if (!session) {
-    redirect('/login')
-  }
+  const businesses = await sql`SELECT slug FROM businesses WHERE owner_id = ${userId} LIMIT 1`
+  const slug = businesses[0]?.slug as string | undefined
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar — implementada na Fase 4 */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <span className="text-xl font-bold text-gray-900">BookEase</span>
-        </div>
-        <nav className="flex-1 p-4">
-          <p className="text-sm text-gray-400">Sidebar — Fase 4</p>
-        </nav>
-      </aside>
-
-      <main className="flex-1 overflow-auto">
+      <Sidebar bookingSlug={slug} />
+      <main className="flex-1 overflow-auto pt-14 md:pt-0">
         {children}
       </main>
     </div>

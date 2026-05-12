@@ -1,15 +1,23 @@
-import type { Metadata } from 'next'
+import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
+import sql from '@/lib/db'
+import ServicosClient from '@/components/dashboard/ServicosClient'
+import { Service } from '@/types'
 
-export const metadata: Metadata = {
-  title: 'Serviços',
-}
+export default async function ServicosPage() {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) redirect('/login')
 
-// CRUD de serviços — implementada na Fase 5
-export default function ServicosPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Serviços</h1>
-      <p className="mt-2 text-gray-500">Gerenciar serviços — Fase 5</p>
-    </div>
-  )
+  const businesses = await sql`
+    SELECT id FROM businesses WHERE owner_id = ${userId} LIMIT 1
+  `
+  const business = businesses[0]
+  if (!business) redirect('/dashboard')
+
+  const services = await sql<Service>`
+    SELECT * FROM services WHERE business_id = ${business.id} ORDER BY created_at ASC
+  `
+
+  return <ServicosClient services={services} />
 }

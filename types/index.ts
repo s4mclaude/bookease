@@ -15,6 +15,7 @@ export interface Business {
   email: string | null
   address: string | null
   logo_url: string | null
+  description: string | null
   created_at: string
 }
 
