@@ -9,6 +9,7 @@ import {
   Scissors,
   Users,
   UserCheck,
+  BarChart3,
   Settings,
   LogOut,
   ExternalLink,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/servicos', label: 'Serviços', icon: Scissors },
   { href: '/dashboard/profissionais', label: 'Profissionais', icon: Users },
   { href: '/dashboard/clientes', label: 'Clientes', icon: UserCheck },
+  { href: '/dashboard/relatorios', label: 'Relatórios', icon: BarChart3 },
   { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
