@@ -70,6 +70,19 @@ export default function CadastroPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Telefone / WhatsApp
+              </label>
+              <input
+                name="phone"
+                type="tel"
+                required
+                placeholder="(11) 99999-9999"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Senha
               </label>
               <input

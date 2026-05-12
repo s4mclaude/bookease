@@ -23,15 +23,15 @@ function MetricCard({
   color: string
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-5">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{sub}</p>}
     </div>
   )
 }
@@ -47,14 +47,24 @@ export default async function RelatoriosPage() {
 
   const [totals, topServices, topProfessionals, byMonth, totalClients] = await Promise.all([
     sql`
+      WITH sessions AS (
+        SELECT
+          a.customer_id,
+          a.professional_id,
+          a.scheduled_date,
+          a.status,
+          SUM(s.price) AS session_price
+        FROM appointments a
+        JOIN services s ON s.id = a.service_id
+        WHERE a.business_id = ${business.id}
+        GROUP BY a.customer_id, a.professional_id, a.scheduled_date, a.status
+      )
       SELECT
-        COUNT(*)                                               AS total,
-        COUNT(*) FILTER (WHERE a.status = 'completed')        AS completed,
-        COUNT(*) FILTER (WHERE a.status = 'canceled')         AS canceled,
-        COALESCE(SUM(s.price) FILTER (WHERE a.status = 'completed'), 0) AS revenue
-      FROM appointments a
-      JOIN services s ON s.id = a.service_id
-      WHERE a.business_id = ${business.id}
+        COUNT(*)                                                  AS total,
+        COUNT(*) FILTER (WHERE status = 'completed')              AS completed,
+        COUNT(*) FILTER (WHERE status = 'canceled')               AS canceled,
+        COALESCE(SUM(session_price) FILTER (WHERE status = 'completed'), 0) AS revenue
+      FROM sessions
     `,
     sql`
       SELECT s.name, COUNT(*) AS total
@@ -75,13 +85,18 @@ export default async function RelatoriosPage() {
       LIMIT 5
     `,
     sql`
+      WITH sessions AS (
+        SELECT customer_id, professional_id, scheduled_date, status
+        FROM appointments
+        WHERE business_id = ${business.id}
+          AND scheduled_date >= NOW() - INTERVAL '6 months'
+        GROUP BY customer_id, professional_id, scheduled_date, status
+      )
       SELECT
-        TO_CHAR(scheduled_date, 'YYYY-MM') AS month,
-        COUNT(*)                            AS total,
-        COUNT(*) FILTER (WHERE status = 'completed') AS completed
-      FROM appointments
-      WHERE business_id = ${business.id}
-        AND scheduled_date >= NOW() - INTERVAL '6 months'
+        TO_CHAR(scheduled_date, 'YYYY-MM')           AS month,
+        COUNT(*)                                      AS total,
+        COUNT(*) FILTER (WHERE status = 'completed')  AS completed
+      FROM sessions
       GROUP BY month
       ORDER BY month ASC
     `,
@@ -102,8 +117,8 @@ export default async function RelatoriosPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Relatórios</h1>
-        <p className="text-gray-500 text-sm mt-1">Visão geral do desempenho do negócio</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Relatórios</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Visão geral do desempenho do negócio</p>
       </div>
 
       {/* Metric cards */}
@@ -152,10 +167,10 @@ export default async function RelatoriosPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Agendamentos por mês */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Agendamentos por mês</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Agendamentos por mês</h2>
           {byMonth.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhum agendamento ainda.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum agendamento ainda.</p>
           ) : (
             <div className="space-y-3">
               {byMonth.map((row) => {
@@ -168,16 +183,13 @@ export default async function RelatoriosPage() {
                 return (
                   <div key={String(row.month)}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-600">{label}</span>
-                      <span className="text-gray-900 font-medium">{total} agendamentos</span>
+                      <span className="text-gray-600 dark:text-gray-400">{label}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{total} agendamentos</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div
-                        className="bg-green-500 h-1.5 rounded-full transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+                      <div className="bg-green-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{completed} concluídos ({pct}%)</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{completed} concluídos ({pct}%)</p>
                   </div>
                 )
               })}
@@ -186,10 +198,10 @@ export default async function RelatoriosPage() {
         </div>
 
         {/* Serviços */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Serviços mais solicitados</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-none p-5">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Serviços mais solicitados</h2>
           {topServices.length === 0 ? (
-            <p className="text-sm text-gray-400">Nenhum agendamento ainda.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum agendamento ainda.</p>
           ) : (
             <div className="space-y-3">
               {topServices.map((s, i) => {
@@ -198,19 +210,16 @@ export default async function RelatoriosPage() {
                 return (
                   <div key={String(s.name)}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="flex items-center gap-2 text-gray-600">
-                        <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500">
+                      <span className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                        <span className="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-500 dark:text-gray-400">
                           {i + 1}
                         </span>
                         {s.name}
                       </span>
-                      <span className="text-gray-900 font-medium">{s.total}x</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{s.total}x</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-400 h-1.5 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
+                      <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
@@ -222,8 +231,8 @@ export default async function RelatoriosPage() {
 
       {/* Cancelados */}
       {canceledAppts > 0 && (
-        <div className="mt-6 bg-red-50 border border-red-100 rounded-2xl px-5 py-4">
-          <p className="text-sm text-red-700">
+        <div className="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded-2xl px-5 py-4">
+          <p className="text-sm text-red-700 dark:text-red-400">
             <span className="font-semibold">{canceledAppts} agendamento{canceledAppts !== 1 ? 's' : ''} cancelado{canceledAppts !== 1 ? 's' : ''}</span>
             {' '}no total — {totalAppts > 0 ? Math.round((canceledAppts / totalAppts) * 100) : 0}% dos agendamentos.
           </p>

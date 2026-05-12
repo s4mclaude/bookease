@@ -19,8 +19,9 @@ export default async function ClientesPage() {
         c.name,
         c.whatsapp,
         c.created_at,
-        COUNT(a.id)    FILTER (WHERE a.status != 'canceled')  AS total_appointments,
-        MAX(a.scheduled_date) FILTER (WHERE a.status != 'canceled') AS last_visit,
+        COUNT(DISTINCT CASE WHEN a.status != 'canceled'
+          THEN a.professional_id::text || a.scheduled_date::text END)   AS total_appointments,
+        (MAX(a.scheduled_date) FILTER (WHERE a.status != 'canceled'))::text AS last_visit,
         COALESCE(SUM(s.price) FILTER (WHERE a.status = 'completed'), 0) AS total_spent
       FROM customers c
       LEFT JOIN appointments a ON a.customer_id = c.id
@@ -31,17 +32,18 @@ export default async function ClientesPage() {
     `,
     sql`
       SELECT
-        a.id,
-        a.customer_id,
-        a.scheduled_date,
-        a.start_time,
+        MIN(a.id::text)                                                    AS id,
+        a.customer_id::text,
+        a.scheduled_date::text,
+        MIN(a.start_time)::text                                            AS start_time,
         a.status,
-        s.name AS service_name,
-        p.name AS professional_name
+        p.name                                                             AS professional_name,
+        STRING_AGG(s.name, ' + ' ORDER BY a.start_time)                   AS service_name
       FROM appointments a
       JOIN services s ON s.id = a.service_id
       JOIN professionals p ON p.id = a.professional_id
       WHERE a.business_id = ${business.id}
+      GROUP BY a.customer_id, a.professional_id, a.scheduled_date, a.status, p.name
       ORDER BY a.scheduled_date DESC
     `,
   ])

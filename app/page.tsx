@@ -191,65 +191,85 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-gray-900">Planos simples e transparentes</h2>
-            <p className="text-gray-500 mt-3">Comece de graça, cresça quando precisar</p>
+            <p className="text-gray-500 mt-3">Teste grátis por 7 dias. Depois, continue por um valor acessível.</p>
           </div>
+
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {/* Gratuito */}
-            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="font-bold text-gray-900 text-lg">Gratuito</h3>
-              <p className="text-gray-500 text-sm mt-1">Para quem está começando</p>
-              <div className="mt-6 mb-8">
-                <span className="text-4xl font-bold text-gray-900">R$&nbsp;0</span>
-                <span className="text-gray-400 text-sm">/mês</span>
+
+            {/* Teste grátis */}
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm flex flex-col">
+              <div>
+                <h3 className="font-bold text-gray-900 text-xl">Teste grátis</h3>
+                <p className="text-gray-500 text-sm mt-2">Experimente o sistema completo antes de assinar.</p>
               </div>
-              <ul className="space-y-3 mb-8">
-                {['Até 2 profissionais', 'Agendamentos ilimitados', 'Página pública', 'Painel de controle'].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="mt-8 mb-8">
+                <div className="flex items-end gap-2">
+                  <span className="text-5xl font-bold text-gray-900">R$&nbsp;0</span>
+                </div>
+                <span className="text-gray-400 text-sm mt-1 block">por 7 dias</span>
+              </div>
+              <ul className="space-y-3.5 mb-10 flex-1">
+                {[
+                  'Acesso completo por 7 dias',
+                  'Até 2 profissionais',
+                  'Agendamentos ilimitados durante o teste',
+                  'Página pública de agendamento',
+                  'Painel administrativo',
+                  'Sem cartão de crédito',
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
               <Link
-                href="/login"
-                className="block text-center border border-gray-200 hover:border-gray-300 text-gray-700 font-medium py-3 rounded-xl transition-colors"
+                href="/cadastro"
+                className="block text-center border-2 border-gray-200 hover:border-green-400 hover:text-green-600 text-gray-700 font-semibold py-3.5 rounded-xl transition-colors"
               >
-                Começar grátis
+                Começar teste grátis
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="bg-green-500 rounded-2xl p-8 shadow-lg relative overflow-hidden">
-              <span className="absolute top-4 right-4 bg-white text-green-600 text-xs font-bold px-3 py-1 rounded-full">
-                Popular
+            <div className="bg-green-500 rounded-2xl p-8 shadow-xl relative overflow-hidden flex flex-col">
+              <span className="absolute top-5 right-5 bg-white text-green-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                Mais escolhido
               </span>
-              <h3 className="font-bold text-white text-lg">Pro</h3>
-              <p className="text-green-100 text-sm mt-1">Para quem quer crescer</p>
-              <div className="mt-6 mb-8">
-                <span className="text-4xl font-bold text-white">R$&nbsp;49</span>
-                <span className="text-green-200 text-sm">/mês</span>
+              <div>
+                <h3 className="font-bold text-white text-xl">Pro</h3>
+                <p className="text-green-100 text-sm mt-2">Para negócios que querem organizar a agenda e reduzir faltas.</p>
               </div>
-              <ul className="space-y-3 mb-8">
+              <div className="mt-8 mb-8">
+                <div className="flex items-end gap-2">
+                  <span className="text-5xl font-bold text-white">R$&nbsp;49</span>
+                </div>
+                <span className="text-green-200 text-sm mt-1 block">/mês</span>
+              </div>
+              <ul className="space-y-3.5 mb-10 flex-1">
                 {[
                   'Profissionais ilimitados',
                   'Agendamentos ilimitados',
                   'Relatórios e métricas',
                   'Histórico completo de clientes',
+                  'Lembretes automáticos por WhatsApp',
                   'Suporte prioritário',
                 ].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white">
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-white">
                     <Check className="w-4 h-4 text-green-200 shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/login"
-                className="block text-center bg-white hover:bg-gray-50 text-green-600 font-semibold py-3 rounded-xl transition-colors"
+              <a
+                href="https://wa.me/5500000000000?text=Olá%2C%20tenho%20interesse%20no%20plano%20Pro%20do%20BookEase!"
+                target="_blank"
+                className="block text-center bg-white hover:bg-gray-50 text-green-600 font-semibold py-3.5 rounded-xl transition-colors"
               >
-                Quero o plano Pro
-              </Link>
+                Assinar plano Pro
+              </a>
             </div>
+
           </div>
         </div>
       </section>

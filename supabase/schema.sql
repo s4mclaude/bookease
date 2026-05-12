@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   email       text UNIQUE NOT NULL,
   password    text NOT NULL,
   name        text,
+  phone       text,
   created_at  timestamptz DEFAULT now()
 );
 

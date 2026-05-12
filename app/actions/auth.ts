@@ -31,6 +31,8 @@ export async function register(_prev: ActionState, formData: FormData): Promise<
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const phone = (formData.get('phone') as string)?.trim() || null
+  if (!phone) return { error: 'O telefone é obrigatório.' }
   const businessName = formData.get('businessName') as string
   const businessType = formData.get('businessType') as string
 
@@ -43,8 +45,8 @@ export async function register(_prev: ActionState, formData: FormData): Promise<
     const hashedPassword = await bcrypt.hash(password, 12)
 
     const created = await sql`
-      INSERT INTO users (email, password, name)
-      VALUES (${email}, ${hashedPassword}, ${name})
+      INSERT INTO users (email, password, name, phone)
+      VALUES (${email}, ${hashedPassword}, ${name}, ${phone})
       RETURNING id
     `
     const userId = created[0].id

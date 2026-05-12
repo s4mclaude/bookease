@@ -5,6 +5,26 @@ Formato: `[versão] — data` · Ordem: mais recente no topo.
 
 ---
 
+## 🛠️ [v1.5.0] — 2026-05-12
+
+### ✨ Adicionado
+- `[Admin]` Painel admin redesenhado: logo/iniciais do negócio, telefone do dono e barra "Exibir mais" com estatísticas (profissionais, horários, agendamentos e faturamento estimado)
+- `[Admin]` Botão "Ver dashboard" por negócio — abre página `/admin/negocio/[id]` com métricas completas e últimos agendamentos
+- `[Admin]` Plano Pro com contagem regressiva em tempo real (`Xd:XXh:XXmin:XXs`) e expiração automática após 30 dias
+- `[Admin]` Badge de plano (Pro/Free) e e-mail do dono logado na sidebar do dashboard
+- `[Admin]` Atualização do badge Pro/Free em tempo real (polling a cada 15s + ao focar a janela)
+- `[Site]` Campo "Telefone / WhatsApp" obrigatório no formulário de cadastro
+- `[Site + Admin]` Dark mode com toggle na sidebar e no painel admin; estado persistido via localStorage com prevenção de flash
+
+### 🔄 Alterado
+- `[Site + Admin]` Background animado com partículas (particles.js) em todo o dashboard e painel admin, com cores adaptadas ao tema claro/escuro
+- `[Admin]` Skeletons de carregamento atualizados com variantes dark mode em todas as páginas do dashboard
+
+### 🐛 Corrigido
+- `[Admin]` Pluralização incorreta "profissionalis" → "profissionais"
+
+---
+
 ## 🚀 [v1.3.0] — 2026-05-11
 
 ### ✨ Adicionado

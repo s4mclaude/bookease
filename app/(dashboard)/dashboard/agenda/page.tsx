@@ -68,8 +68,8 @@ export default async function AgendaPage({ searchParams }: Props) {
   return (
     <div className="p-4 md:p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-        <p className="text-gray-500 text-sm mt-1">Gerencie os agendamentos do dia</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agenda</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gerencie os agendamentos do dia</p>
       </div>
       <AgendaClient
         appointments={appointments as any}
