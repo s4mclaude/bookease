@@ -5,8 +5,8 @@ import { Phone, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 
 const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
 
-function formatDate(val: string) {
-  const d = new Date(String(val).slice(0, 10) + 'T12:00:00')
+function formatDate(val: unknown) {
+  const d = val instanceof Date ? val : new Date(String(val).slice(0, 10) + 'T12:00:00')
   return `${d.getDate()} de ${MONTHS[d.getMonth()]} de ${d.getFullYear()}`
 }
 

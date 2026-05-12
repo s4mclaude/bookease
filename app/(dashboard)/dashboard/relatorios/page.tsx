@@ -159,7 +159,8 @@ export default async function RelatoriosPage() {
           ) : (
             <div className="space-y-3">
               {byMonth.map((row) => {
-                const [year, month] = String(row.month).split('-')
+                const monthStr = row.month instanceof Date ? row.month.toISOString().slice(0, 7) : String(row.month)
+                const [year, month] = monthStr.split('-')
                 const label = `${MONTH_NAMES[parseInt(month) - 1]} ${year}`
                 const total = Number(row.total)
                 const completed = Number(row.completed)
