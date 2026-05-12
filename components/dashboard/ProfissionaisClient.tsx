@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
-import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Camera } from 'lucide-react'
+import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Camera, Lock } from 'lucide-react'
 import { Service, Professional, Availability } from '@/types'
 import {
   createProfessional,
@@ -235,16 +235,22 @@ type ModalState =
   | { type: 'edit'; professional: ProfWithDetails }
   | null
 
+const FREE_LIMIT = 2
+
 export default function ProfissionaisClient({
   professionals,
   services,
+  plan,
 }: {
   professionals: ProfWithDetails[]
   services: Service[]
+  plan: string
 }) {
   const [modal, setModal] = useState<ModalState>(null)
   const [error, setError] = useState<string>()
   const [isPending, startTransition] = useTransition()
+
+  const atLimit = plan === 'free' && professionals.length >= FREE_LIMIT
 
   function openCreate() { setError(undefined); setModal({ type: 'create' }) }
   function openEdit(professional: ProfWithDetails) { setError(undefined); setModal({ type: 'edit', professional }) }
@@ -275,19 +281,49 @@ export default function ProfissionaisClient({
 
   return (
     <div className="p-4 md:p-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Profissionais</h1>
-          <p className="text-gray-500 text-sm mt-1">Gerencie a equipe e a disponibilidade</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Gerencie a equipe e a disponibilidade
+            {plan === 'free' && (
+              <span className="ml-2 text-gray-400">
+                · {professionals.length}/{FREE_LIMIT} do plano gratuito
+              </span>
+            )}
+          </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Novo profissional
-        </button>
+        {atLimit ? (
+          <a
+            href="/#planos"
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
+          >
+            <Lock className="w-4 h-4" />
+            Fazer upgrade
+          </a>
+        ) : (
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Novo profissional
+          </button>
+        )}
       </div>
+
+      {atLimit && (
+        <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <Lock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-800">
+            Você atingiu o limite de {FREE_LIMIT} profissionais do plano gratuito.{' '}
+            <a href="/#planos" className="font-semibold underline underline-offset-2 hover:text-amber-900">
+              Faça upgrade para o plano Pro
+            </a>{' '}
+            e adicione profissionais ilimitados.
+          </p>
+        </div>
+      )}
 
       {professionals.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">

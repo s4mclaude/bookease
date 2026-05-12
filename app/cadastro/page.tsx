@@ -22,6 +22,15 @@ export default function CadastroPage() {
           <p className="text-gray-500 text-sm mt-2">Crie sua conta e comece a receber agendamentos</p>
         </div>
 
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            ← Voltar para a página inicial
+          </Link>
+        </div>
+
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <form action={formAction} className="space-y-5">
 

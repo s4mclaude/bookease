@@ -14,8 +14,8 @@ export default async function ProfissionaisPage() {
   const userId = session?.user?.id
   if (!userId) redirect('/login')
 
-  const businesses = await sql`
-    SELECT id FROM businesses WHERE owner_id = ${userId} LIMIT 1
+  const businesses = await sql<{ id: string; plan: string }>`
+    SELECT id, plan FROM businesses WHERE owner_id = ${userId} LIMIT 1
   `
   const business = businesses[0]
   if (!business) redirect('/dashboard')
@@ -47,5 +47,5 @@ export default async function ProfissionaisPage() {
     availability: availRows.filter((a) => a.professional_id === p.id),
   }))
 
-  return <ProfissionaisClient professionals={professionals} services={serviceRows} />
+  return <ProfissionaisClient professionals={professionals} services={serviceRows} plan={business.plan} />
 }

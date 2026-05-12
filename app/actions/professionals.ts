@@ -6,9 +6,11 @@ import { revalidatePath } from 'next/cache'
 
 type Result = { error: string } | undefined
 
-async function getBusinessId(userId: string) {
-  const rows = await sql`SELECT id FROM businesses WHERE owner_id = ${userId} LIMIT 1`
-  return rows[0]?.id as string | undefined
+async function getBusiness(userId: string) {
+  const rows = await sql<{ id: string; plan: string }>`
+    SELECT id, plan FROM businesses WHERE owner_id = ${userId} LIMIT 1
+  `
+  return rows[0] as { id: string; plan: string } | undefined
 }
 
 export async function createProfessional(formData: FormData): Promise<Result> {
@@ -16,8 +18,19 @@ export async function createProfessional(formData: FormData): Promise<Result> {
   const userId = session?.user?.id
   if (!userId) return { error: 'Não autorizado.' }
 
-  const businessId = await getBusinessId(userId)
-  if (!businessId) return { error: 'Negócio não encontrado.' }
+  const business = await getBusiness(userId)
+  if (!business) return { error: 'Negócio não encontrado.' }
+
+  const businessId = business.id
+
+  if (business.plan === 'free') {
+    const countRows = await sql<{ count: string }>`
+      SELECT COUNT(*) AS count FROM professionals WHERE business_id = ${businessId}
+    `
+    if (parseInt(countRows[0].count) >= 2) {
+      return { error: 'Você atingiu o limite de 2 profissionais do plano gratuito. Faça upgrade para adicionar mais.' }
+    }
+  }
 
   const name = formData.get('name') as string
   const role = (formData.get('role') as string) || null
@@ -57,7 +70,8 @@ export async function createProfessional(formData: FormData): Promise<Result> {
 
 export async function updateProfessional(id: string, formData: FormData): Promise<Result> {
   const session = await auth()
-  if (!session) return { error: 'Não autorizado.' }
+  const userId = session?.user?.id
+  if (!userId) return { error: 'Não autorizado.' }
 
   const name = formData.get('name') as string
   const role = (formData.get('role') as string) || null
